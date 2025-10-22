@@ -27,6 +27,9 @@ const navItems = [
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const getPageTitle = () => {
+    if (pathname.startsWith('/vehicles/new')) {
+      return 'Add New Vehicle';
+    }
     if (pathname.startsWith('/vehicles/')) {
       return 'Vehicle Details';
     }
@@ -52,7 +55,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
                     asChild
-                    isActive={pathname.startsWith(item.href)}
+                    isActive={pathname === item.href}
                     tooltip={item.label}
                   >
                     <Link href={item.href}>
