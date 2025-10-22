@@ -1,3 +1,28 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "vehicle-1",
+      "description": "White sedan",
+      "imageUrl": "https://images.unsplash.com/photo-1669254382169-5b40120ee577?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8d2hpdGUlMjBzZWRhbnxlbnwwfHx8fDE3NjEwOTM1NDF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "white sedan"
+    },
+    {
+      "id": "vehicle-2",
+      "description": "Black SUV",
+      "imageUrl": "https://images.unsplash.com/photo-1692370793611-7724a38ab701?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxibGFjayUyMHN1dnxlbnwwfHx8fDE3NjEwOTM1NDF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "black suv"
+    },
+    {
+      "id": "vehicle-3",
+      "description": "Red sports car",
+      "imageUrl": "https://images.unsplash.com/photo-1757508825464-6c8cbd5042fd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxyZWQlMjBzcG9ydHNjYXJ8ZW58MHx8fHwxNzYxMTA3Mjc5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "red sportscar"
+    },
+    {
+      "id": "vehicle-4",
+      "description": "Blue pickup truck",
+      "imageUrl": "https://images.unsplash.com/photo-1646747446001-e255ab2b70e3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxibHVlJTIwcGlja3VwfGVufDB8fHx8MTc2MTE3MDk0Nnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "blue pickup"
+    }
+  ]
 }
