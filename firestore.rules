@@ -1,0 +1,105 @@
+/**
+ * @fileoverview Firestore Security Rules for Fleet Management Application
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model for managing fleets, vehicles, damage reports, and damage areas.
+ * Only authenticated users can access their own data.
+ *
+ * Data Structure:
+ * All data is nested under /users/{userId}, ensuring clear ownership.  Fleets, vehicles, damage reports, and damage areas
+ * are all organized in a hierarchical structure under the user's ID.
+ *
+ * Key Security Decisions:
+ * - User listing is disallowed.
+ * - All write operations are strictly controlled by ownership.
+ * - Data validation is minimal, focusing on ownership checks for relational integrity.
+ *
+ * Denormalization for Authorization:
+ *  The hierarchical data model under `/users/{userId}` inherently denormalizes ownership, enabling efficient path-based authorization.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Checks if the request is made by a signed-in user.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * @description Checks if the authenticated user ID matches the provided user ID.
+     */
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    /**
+     * @description Checks if the authenticated user is the owner of the existing document.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Rules for fleets owned by a specific user.
+     * @path /users/{userId}/fleets/{fleetId}
+     * @allow (create) User 'user123' can create a fleet with fleetId 'fleet456' under their user ID.
+     * @deny (create) User 'user456' cannot create a fleet under user ID 'user123'.
+     * @principle Enforces document ownership for writes; restricts access to a user's own data tree.
+     */
+    match /users/{userId}/fleets/{fleetId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.id == fleetId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Rules for vehicles within a specific fleet.
+     * @path /users/{userId}/fleets/{fleetId}/vehicles/{vehicleId}
+     * @allow (create) User 'user123' can create a vehicle with vehicleId 'vehicle789' within fleet 'fleet456' under their user ID.
+     * @deny (create) User 'user456' cannot create a vehicle under user ID 'user123'.
+     * @principle Enforces document ownership for writes; restricts access to a user's own data tree.
+     */
+    match /users/{userId}/fleets/{fleetId}/vehicles/{vehicleId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.fleetId == fleetId && request.resource.data.id == vehicleId;
+      allow update: if isExistingOwner(userId) && request.resource.data.fleetId == resource.data.fleetId && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Rules for damage reports for a specific vehicle.
+     * @path /users/{userId}/fleets/{fleetId}/vehicles/{vehicleId}/damageReports/{damageReportId}
+     * @allow (create) User 'user123' can create a damage report with damageReportId 'damageReport101' for vehicle 'vehicle789' within fleet 'fleet456' under their user ID.
+     * @deny (create) User 'user456' cannot create a damage report under user ID 'user123'.
+     * @principle Enforces document ownership for writes; restricts access to a user's own data tree.
+     */
+    match /users/{userId}/fleets/{fleetId}/vehicles/{vehicleId}/damageReports/{damageReportId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.vehicleId == vehicleId && request.resource.data.id == damageReportId;
+      allow update: if isExistingOwner(userId) && request.resource.data.vehicleId == resource.data.vehicleId && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Rules for damage areas for a specific damage report.
+     * @path /users/{userId}/fleets/{fleetId}/vehicles/{vehicleId}/damageReports/{damageReportId}/damageAreas/{damageAreaId}
+     * @allow (create) User 'user123' can create a damage area with damageAreaId 'damageArea202' for damage report 'damageReport101' for vehicle 'vehicle789' within fleet 'fleet456' under their user ID.
+     * @deny (create) User 'user456' cannot create a damage area under user ID 'user123'.
+     * @principle Enforces document ownership for writes; restricts access to a user's own data tree.
+     */
+    match /users/{userId}/fleets/{fleetId}/vehicles/{vehicleId}/damageReports/{damageReportId}/damageAreas/{damageAreaId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.damageReportId == damageReportId && request.resource.data.id == damageAreaId;
+      allow update: if isExistingOwner(userId) && request.resource.data.damageReportId == resource.data.damageReportId && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
+    }
+  }
+}

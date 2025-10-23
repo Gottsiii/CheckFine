@@ -1,0 +1,252 @@
+{
+  "entities": {
+    "Fleet": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Fleet",
+      "type": "object",
+      "description": "Represents a fleet of vehicles managed within the application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the fleet."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the fleet."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the fleet."
+        },
+        "fleetType": {
+          "type": "string",
+          "description": "Type of fleet (e.g., car rental, car sales, personal car management)."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "fleetType"
+      ]
+    },
+    "Vehicle": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Vehicle",
+      "type": "object",
+      "description": "Represents a vehicle within a fleet.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the vehicle."
+        },
+        "fleetId": {
+          "type": "string",
+          "description": "Reference to Fleet. (Relationship: Fleet 1:N Vehicle)"
+        },
+        "make": {
+          "type": "string",
+          "description": "Vehicle make (e.g., Toyota, Ford)."
+        },
+        "model": {
+          "type": "string",
+          "description": "Vehicle model (e.g., Camry, F-150)."
+        },
+        "year": {
+          "type": "number",
+          "description": "Vehicle year."
+        },
+        "licensePlate": {
+          "type": "string",
+          "description": "Vehicle license plate number."
+        }
+      },
+      "required": [
+        "id",
+        "fleetId",
+        "make",
+        "model",
+        "year"
+      ]
+    },
+    "DamageReport": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "DamageReport",
+      "type": "object",
+      "description": "Represents a damage report for a vehicle.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the damage report."
+        },
+        "vehicleId": {
+          "type": "string",
+          "description": "Reference to Vehicle. (Relationship: Vehicle 1:N DamageReport)"
+        },
+        "reportDate": {
+          "type": "string",
+          "description": "Date and time when the damage report was created.",
+          "format": "date-time"
+        },
+        "damageDescription": {
+          "type": "string",
+          "description": "Detailed description of the damage."
+        },
+        "estimatedCost": {
+          "type": "number",
+          "description": "Estimated cost of repair."
+        }
+      },
+      "required": [
+        "id",
+        "vehicleId",
+        "reportDate",
+        "damageDescription"
+      ]
+    },
+    "DamageArea": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "DamageArea",
+      "type": "object",
+      "description": "Represents a specific area of damage on a vehicle.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the damage area."
+        },
+        "damageReportId": {
+          "type": "string",
+          "description": "Reference to DamageReport. (Relationship: DamageReport 1:N DamageArea)"
+        },
+        "areaName": {
+          "type": "string",
+          "description": "Name of the damaged area (e.g., Windshield, Door, Bumper)."
+        },
+        "damageSeverity": {
+          "type": "string",
+          "description": "Severity of the damage (e.g., Minor, Moderate, Severe)."
+        }
+      },
+      "required": [
+        "id",
+        "damageReportId",
+        "areaName",
+        "damageSeverity"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}/fleets/{fleetId}",
+        "definition": {
+          "entityName": "Fleet",
+          "schema": {
+            "$ref": "#/backend/entities/Fleet"
+          },
+          "description": "Stores fleet information for a specific user. Uses path-based ownership.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The ID of the user who owns the fleet."
+            },
+            {
+              "name": "fleetId",
+              "description": "The ID of the fleet."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/fleets/{fleetId}/vehicles/{vehicleId}",
+        "definition": {
+          "entityName": "Vehicle",
+          "schema": {
+            "$ref": "#/backend/entities/Vehicle"
+          },
+          "description": "Stores vehicle information for a specific fleet. Uses path-based ownership.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The ID of the user who owns the fleet."
+            },
+            {
+              "name": "fleetId",
+              "description": "The ID of the fleet containing the vehicle."
+            },
+            {
+              "name": "vehicleId",
+              "description": "The ID of the vehicle."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/fleets/{fleetId}/vehicles/{vehicleId}/damageReports/{damageReportId}",
+        "definition": {
+          "entityName": "DamageReport",
+          "schema": {
+            "$ref": "#/backend/entities/DamageReport"
+          },
+          "description": "Stores damage reports for a specific vehicle. Uses path-based ownership.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The ID of the user who owns the fleet."
+            },
+            {
+              "name": "fleetId",
+              "description": "The ID of the fleet containing the vehicle."
+            },
+            {
+              "name": "vehicleId",
+              "description": "The ID of the vehicle."
+            },
+            {
+              "name": "damageReportId",
+              "description": "The ID of the damage report."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/fleets/{fleetId}/vehicles/{vehicleId}/damageReports/{damageReportId}/damageAreas/{damageAreaId}",
+        "definition": {
+          "entityName": "DamageArea",
+          "schema": {
+            "$ref": "#/backend/entities/DamageArea"
+          },
+          "description": "Stores damage areas for a specific damage report. Uses path-based ownership.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The ID of the user who owns the fleet."
+            },
+            {
+              "name": "fleetId",
+              "description": "The ID of the fleet containing the vehicle."
+            },
+            {
+              "name": "vehicleId",
+              "description": "The ID of the vehicle."
+            },
+            {
+              "name": "damageReportId",
+              "description": "The ID of the damage report."
+            },
+            {
+              "name": "damageAreaId",
+              "description": "The ID of the damage area."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to manage vehicle fleets, vehicles, and damage reports. It utilizes hierarchical paths for ownership and denormalization to ensure authorization independence. Each user has their own fleets, and each fleet contains vehicles, which in turn contain damage reports and damage areas. This allows for simple and efficient security rules based on path-based ownership. Specifically:\n\n1.  **Authorization Independence:** The structure ensures authorization independence by avoiding the need for `get()` calls in security rules. Since each user owns their fleets and its subcollections, authorization can be determined directly from the path.\n2.  **Structural Segregation:** Each collection maintains a homogeneous security posture, as data with different access needs are separated into distinct collections.\n3.  **Access Modeling:** Uses path-based ownership (`/users/{userId}/fleets/{fleetId}/vehicles/{vehicleId}/damageReports/{damageReportId}/damageAreas/{damageAreaId}`) to model access control.\n4.  **QAPs (Rules are not Filters):** List operations are secured through path-based ownership. A user can only list fleets, vehicles, damage reports, and damage areas under their respective user ID."
+  }
+}
