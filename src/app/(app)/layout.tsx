@@ -1,8 +1,8 @@
 'use client';
 
-import { Car, Wrench, LayoutDashboard } from 'lucide-react';
+import { Car, Wrench, LayoutDashboard, LogOut, UserCircle } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   SidebarProvider,
   Sidebar,
@@ -13,7 +13,22 @@ import {
   SidebarMenuButton,
   SidebarTrigger,
   SidebarInset,
+  SidebarFooter,
 } from '@/components/ui/sidebar';
+import { useUser } from '@/firebase';
+import { getAuth, signOut } from 'firebase/auth';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useEffect } from 'react';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -26,6 +41,16 @@ const navItems = [
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, isUserLoading } = useUser();
+  const auth = getAuth();
+
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push('/login');
+    }
+  }, [isUserLoading, user, router]);
+
   const getPageTitle = () => {
     if (pathname.startsWith('/vehicles/new')) {
       return 'Add New Vehicle';
@@ -38,6 +63,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       'Dashboard'
     );
   };
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    router.push('/login');
+  };
+
+  if (isUserLoading || !user) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <Skeleton className="h-screen w-full" />
+      </div>
+    );
+  }
 
   return (
     <SidebarProvider>
@@ -67,6 +105,36 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               ))}
             </SidebarMenu>
           </SidebarContent>
+          <SidebarFooter>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-12 w-full justify-start gap-2 px-2">
+                  <Avatar className="h-8 w-8">
+                    {user.photoURL && <AvatarImage src={user.photoURL} />}
+                    <AvatarFallback>
+                      <UserCircle />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col items-start">
+                    <span className="max-w-[100px] truncate text-xs font-medium">
+                      {user.displayName || user.email}
+                    </span>
+                    <span className="max-w-[100px] truncate text-xs text-muted-foreground">
+                      {user.displayName ? user.email : ''}
+                    </span>
+                  </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" side="top" align="start">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>
+                  <LogOut className="mr-2" />
+                  Log out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarFooter>
         </Sidebar>
         <SidebarInset>
           <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
