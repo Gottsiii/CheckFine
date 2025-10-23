@@ -31,7 +31,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useEffect } from 'react';
 
 const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/dashboard/fleet', label: 'Fleet', icon: LayoutDashboard },
   {
     href: '/tools/cost-estimator',
     label: 'Cost Estimator',
@@ -57,6 +57,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     }
     if (pathname.startsWith('/vehicles/')) {
       return 'Vehicle Details';
+    }
+    if (pathname === '/dashboard') {
+      return 'Select Fleet Type';
     }
     return (
       navItems.find((item) => pathname.startsWith(item.href))?.label ??
@@ -93,7 +96,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
                     asChild
-                    isActive={pathname === item.href}
+                    isActive={pathname.startsWith(item.href)}
                     tooltip={item.label}
                   >
                     <Link href={item.href}>
