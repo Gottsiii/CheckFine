@@ -8,9 +8,10 @@ import {
   updateRepairCostEstimates,
   type UpdateRepairCostEstimatesInput,
 } from '@/ai/flows/update-repair-cost-estimates-with-current-data';
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
-import { Vehicle } from '@/lib/types';
-import { auth } from 'genkit/next/auth';
+import type { Vehicle } from '@/lib/types';
+import { FieldValue } from 'firebase-admin/firestore';
+import { auth } from '@genkit-ai/next/auth';
+import { getAdminDB } from './firebase-admin';
 
 export async function getDamageEstimate(input: EstimateRepairCostInput) {
   try {
@@ -35,7 +36,7 @@ export async function getSimpleCostEstimate(
 }
 
 export async function createVehicle(
-  vehicleData: Omit<Vehicle, 'id' | 'imageUrl'> & { imageUrl?: string }
+  vehicleData: Omit<Vehicle, 'id' | 'imageUrl' | 'createdAt'> & { imageUrl?: string }
 ) {
   try {
     const user = auth();
@@ -43,11 +44,9 @@ export async function createVehicle(
       throw new Error('You must be logged in to create a vehicle.');
     }
 
-    // For now, we'll assume a single fleet per user.
-    // In a real app, you would select or create a fleet.
     const fleetId = 'default_fleet';
 
-    const db = getFirestore();
+    const db = getAdminDB();
     const vehiclesCollection = db.collection(
       `/users/${user.uid}/fleets/${fleetId}/vehicles`
     );
@@ -61,7 +60,8 @@ export async function createVehicle(
       year: vehicleData.year,
       vin: vehicleData.vin,
       imageUrl:
-        vehicleData.imageUrl || 'https://picsum.photos/seed/placeholder/600/400', // Default placeholder
+        vehicleData.imageUrl ||
+        `https://picsum.photos/seed/${newVehicleRef.id}/600/400`,
       createdAt: FieldValue.serverTimestamp(),
     };
 

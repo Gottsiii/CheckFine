@@ -3,8 +3,7 @@
 import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore'
-import { initializeApp as initializeAdminApp, getApps as getAdminApps } from 'firebase-admin/app';
+import { getFirestore } from 'firebase/firestore';
 
 // IMPORTANT: DO NOT MODIFY THIS FUNCTION
 export function initializeFirebase() {
@@ -26,11 +25,6 @@ export function initializeFirebase() {
       firebaseApp = initializeApp(firebaseConfig);
     }
     
-    // Also initialize the admin app for server-side actions
-    if (!getAdminApps().length) {
-      initializeAdminApp();
-    }
-
     return getSdks(firebaseApp);
   }
 
