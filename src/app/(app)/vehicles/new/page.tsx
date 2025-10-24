@@ -26,11 +26,15 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, PlusCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { createVehicle } from '@/lib/actions';
 
 const formSchema = z.object({
   make: z.string().min(1, 'Make is required'),
   model: z.string().min(1, 'Model is required'),
-  year: z.coerce.number().min(1900, 'Invalid year').max(new Date().getFullYear() + 1, 'Invalid year'),
+  year: z.coerce
+    .number()
+    .min(1900, 'Invalid year')
+    .max(new Date().getFullYear() + 1, 'Invalid year'),
   vin: z.string().min(1, 'VIN is required'),
   image: z.any().optional(),
 });
@@ -64,21 +68,32 @@ export default function NewVehiclePage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    
-    // In a real app, you would upload the image and handle the vehicle creation
-    // via a server action, which would then update your database.
-    // For this prototype, we'll just simulate it.
-    
-    console.log('Form values:', values);
-    
-    setTimeout(() => {
-      setIsLoading(false);
+
+    // In a real app, you would upload the image to a storage service like Cloud Storage.
+    // For this prototype, we'll just use the preview URI if available, or a placeholder.
+    const vehicleData = {
+      ...values,
+      imageUrl: imagePreview || undefined, // The action will provide a default
+    };
+
+    const result = await createVehicle(vehicleData);
+
+    setIsLoading(false);
+
+    if (result.success) {
       toast({
         title: 'Vehicle Created',
         description: `${values.make} ${values.model} has been added to your fleet.`,
       });
-      router.push('/dashboard');
-    }, 1500);
+      router.push('/dashboard/fleet');
+    } else {
+      toast({
+        title: 'Error Creating Vehicle',
+        description:
+          result.error || 'An unexpected error occurred. Please try again.',
+        variant: 'destructive',
+      });
+    }
   }
 
   return (
@@ -127,7 +142,11 @@ export default function NewVehiclePage() {
                     <FormItem>
                       <FormLabel>Year</FormLabel>
                       <FormControl>
-                        <Input type="number" placeholder="e.g., 2023" {...field} />
+                        <Input
+                          type="number"
+                          placeholder="e.g., 2023"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -140,14 +159,17 @@ export default function NewVehiclePage() {
                     <FormItem>
                       <FormLabel>VIN</FormLabel>
                       <FormControl>
-                        <Input placeholder="Vehicle Identification Number" {...field} />
+                        <Input
+                          placeholder="Vehicle Identification Number"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
-              
+
               <FormField
                 control={form.control}
                 name="image"
@@ -155,8 +177,8 @@ export default function NewVehiclePage() {
                   <FormItem>
                     <FormLabel>Vehicle Image</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="file" 
+                      <Input
+                        type="file"
                         accept="image/*"
                         onChange={(e) => {
                           field.onChange(e.target.files);
@@ -164,14 +186,16 @@ export default function NewVehiclePage() {
                         }}
                       />
                     </FormControl>
-                    <FormDescription>Upload a photo of the vehicle.</FormDescription>
+                    <FormDescription>
+                      Upload a photo of the vehicle.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
               {imagePreview && (
-                <div className="relative mt-4 aspect-video w-full max-w-sm mx-auto">
+                <div className="relative mx-auto mt-4 aspect-video w-full max-w-sm">
                   <Image
                     src={imagePreview}
                     alt="Vehicle preview"

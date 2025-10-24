@@ -1,3 +1,5 @@
+import { FieldValue } from 'firebase/firestore';
+
 export type Vehicle = {
   id: string;
   make: string;
@@ -5,6 +7,7 @@ export type Vehicle = {
   year: number;
   vin: string;
   imageUrl: string;
+  createdAt?: FieldValue;
 };
 
 export const VehiclePartIds = [

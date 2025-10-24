@@ -3,7 +3,6 @@
 import { useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
-import { vehicles } from '@/lib/data';
 import {
   Card,
   CardContent,
@@ -15,18 +14,31 @@ import { Button } from '@/components/ui/button';
 import { DamageSketch } from '@/components/damage-sketch';
 import { getDamageEstimate } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Wand2 } from 'lucide-react';
+import { Loader2, Wand2, AlertTriangle } from 'lucide-react';
 import type { EstimateRepairCostOutput } from '@/ai/flows/estimate-repair-cost-from-damage-sketch';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useDoc, useFirebase, useMemoFirebase } from '@/firebase';
+import type { Vehicle } from '@/lib/types';
+import { doc } from 'firebase/firestore';
 
 export default function VehicleDetailPage() {
   const params = useParams();
   const { toast } = useToast();
-  const vehicle = vehicles.find((v) => v.id === params.id);
+  const { firestore, user } = useFirebase();
+
+  const vehicleId = Array.isArray(params.id) ? params.id[0] : params.id;
+  const fleetId = 'default_fleet';
+
+  const vehicleRef = useMemoFirebase(() => {
+    if (!firestore || !user || !vehicleId) return null;
+    return doc(firestore, `/users/${user.uid}/fleets/${fleetId}/vehicles/${vehicleId}`);
+  }, [firestore, user, vehicleId]);
+
+  const { data: vehicle, isLoading: isVehicleLoading, error: vehicleError } = useDoc<Vehicle>(vehicleRef);
 
   const [damagedAreas, setDamagedAreas] = useState<string[]>([]);
   const [damageSketchDataUri, setDamageSketchDataUri] = useState<string>('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isEstimating, setIsEstimating] = useState(false);
   const [estimate, setEstimate] = useState<EstimateRepairCostOutput | null>(
     null
   );
@@ -47,7 +59,7 @@ export default function VehicleDetailPage() {
       return;
     }
 
-    setIsLoading(true);
+    setIsEstimating(true);
     setEstimate(null);
 
     const result = await getDamageEstimate({
@@ -57,7 +69,7 @@ export default function VehicleDetailPage() {
       damageSketchDataUri,
     });
 
-    setIsLoading(false);
+    setIsEstimating(false);
 
     if (result.success && result.data) {
       setEstimate(result.data);
@@ -70,6 +82,39 @@ export default function VehicleDetailPage() {
       });
     }
   };
+  
+  if (isVehicleLoading) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-8 w-1/2" />
+            <Skeleton className="mt-2 h-4 w-1/3" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="aspect-video w-full rounded-lg" />
+          </CardContent>
+        </Card>
+        <Skeleton className="h-96 w-full" />
+      </div>
+    );
+  }
+
+  if (vehicleError) {
+     return (
+        <Card className="bg-destructive/10 text-destructive-foreground">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle /> Error Loading Vehicle
+            </CardTitle>
+            <CardDescription className="text-destructive-foreground/80">
+              Could not load the vehicle data. It might not exist or you may not have permission to view it.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      );
+  }
+
 
   if (!vehicle) {
     return (
@@ -108,10 +153,10 @@ export default function VehicleDetailPage() {
       <div className="flex justify-end">
         <Button
           onClick={handleEstimate}
-          disabled={isLoading || damagedAreas.length === 0}
+          disabled={isEstimating || damagedAreas.length === 0}
           size="lg"
         >
-          {isLoading ? (
+          {isEstimating ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : (
             <Wand2 className="mr-2" />
@@ -120,7 +165,7 @@ export default function VehicleDetailPage() {
         </Button>
       </div>
 
-      {isLoading && (
+      {isEstimating && (
         <Card>
           <CardHeader>
             <CardTitle>Generating AI Estimate...</CardTitle>
