@@ -10,8 +10,9 @@ import {
 } from '@/ai/flows/update-repair-cost-estimates-with-current-data';
 import type { Vehicle } from '@/lib/types';
 import { FieldValue } from 'firebase-admin/firestore';
-import { auth } from '@genkit-ai/next/auth';
+import { auth as adminAuth } from 'firebase-admin';
 import { getAdminDB } from './firebase-admin';
+import { headers } from 'next/headers';
 
 export async function getDamageEstimate(input: EstimateRepairCostInput) {
   try {
@@ -35,11 +36,28 @@ export async function getSimpleCostEstimate(
   }
 }
 
+async function getAuthenticatedUser() {
+  const authorization = headers().get('Authorization');
+  if (authorization?.startsWith('Bearer ')) {
+    const idToken = authorization.split('Bearer ')[1];
+    try {
+      const decodedToken = await adminAuth().verifyIdToken(idToken);
+      return decodedToken;
+    } catch (error) {
+      console.error('Error verifying ID token:', error);
+      return null;
+    }
+  }
+  return null;
+}
+
 export async function createVehicle(
-  vehicleData: Omit<Vehicle, 'id' | 'imageUrl' | 'createdAt'> & { imageUrl?: string }
+  vehicleData: Omit<Vehicle, 'id' | 'imageUrl' | 'createdAt'> & {
+    imageUrl?: string;
+  }
 ) {
   try {
-    const user = auth();
+    const user = await getAuthenticatedUser();
     if (!user) {
       throw new Error('You must be logged in to create a vehicle.');
     }
